@@ -1,0 +1,317 @@
+#!/usr/bin/env python
+import os
+import pathlib
+import filecmp
+import argparse
+import string
+import re
+import json
+
+__version__ = '0.1.0'
+
+class Link:
+    def __init__(self, json_link):
+        if not isinstance(json_link, dict):
+            raise Exception('"link" must be a JSON object with "src" and "dst" fields')
+
+        if not 'src' in json_link or not isinstance(json_link['src'], str):
+            raise Exception('"link" must have "src" field of type string')
+
+        if not 'dst' in json_link or not isinstance(json_link['dst'], str):
+            raise Exception('"link" must have "dst" field of type string')
+
+        self.src = json_link['src']
+        self.dst = json_link['dst']
+
+    def __eq__(self, other):
+        return self.src == other.src and self.dst == other.dst
+
+class Profile:
+    def __init__(self, profile_name, json_profile):
+        self.name = profile_name
+        self.extends = Profile.__parse_extends(json_profile)
+        self.vars = Profile.__parse_vars(json_profile)
+        self.create = Profile.__parse_create(json_profile)
+        self.link = Profile.__parse_link(json_profile)
+
+    def flatten(self):
+        for parent in self.extends:
+            parent.flatten()
+            parent.vars.update(self.vars)
+            self.vars = parent.vars
+            self.create = list(set(self.create + parent.create))
+            self.link.extend(filter(lambda x: x not in self.link, parent.link))
+
+    @staticmethod
+    def __parse_extends(json_profile):
+        result = []
+        extends = json_profile.get('extends')
+        if extends:
+            if not isinstance(extends, list):
+                raise Exception('"extends" must be a JSON list of strings')
+            for name in extends:
+                if not isinstance(name, str):
+                    raise Exception('Base profile name must be a string')
+                result.append(name)
+        return result
+
+    @staticmethod
+    def __parse_vars(json_profile):
+        result = {}
+        variables = json_profile.get('vars')
+        if variables:
+            if not isinstance(variables, dict):
+                raise Exception('"vars" must be a JSON object')
+
+            for name, value in variables.items():
+                if not isinstance(name, str) or not isinstance(value, str):
+                    raise Exception('Variable name and value must be strings')
+                result[name] = value
+        return result
+
+    @staticmethod
+    def __parse_create(json_profile):
+        result = []
+        create = json_profile.get('create')
+        if create:
+            if not isinstance(create, list):
+                raise Exception('"create" must be a JSON list of strings')
+            for name in create:
+                if not isinstance(name, str):
+                    raise Exception('Name of directory to create must be a string')
+                result.append(name)
+        return result
+
+    @staticmethod
+    def __parse_link(json_profile):
+        link = json_profile.get('link')
+        if link:
+            if not isinstance(link, list):
+                raise Exception('"link" must be a JSON list of objects')
+            return [ Link(l) for l in link ]
+        return []
+
+    def __str__(self):
+        extends = f' (extends: {", ".join([ p.name for p in self.extends ])})' if self.extends else ''
+        return f'{self.name}{extends}'
+
+class DotrefConfig:
+    def __init__(self, json_config):
+        self.profile = None
+
+        if json_config and 'profile' in json_config:
+            if not isinstance(json_config['profile'], str):
+                raise Exception('Name of current profile must be string')
+            self.profile = json_config['profile']
+
+    def to_json(self):
+        return { 'profile': self.profile } if self.profile else {}
+
+class Dotref:
+    CONFIG_FILE_NAME = '.dotref.json'
+    TEMPLATE_MARKER = '.dotref'
+    TEMPLATE_REGEXP = re.compile(r'^.+\.dotref(\..*)?$')
+    SYNC = 1
+    UNLINK = 2
+    STATUS = 3
+
+    def __init__(self, args):
+        self.args = args
+        self.config = self.__parse_config()
+        self.states = self.__init_states()
+        getattr(self, self.args.command)()
+
+    def init(self):
+        profiles = self.__parse_profiles()
+
+        if not self.args.profile:
+            raise Exception('Please provide profile name using --profile')
+
+        if self.args.profile not in profiles:
+            raise Exception(f'Profile "{self.args.profile}" not found')
+        self.config.profile = self.args.profile
+        self.__save_config()
+
+    def sync(self):
+        self.__execute_command(Dotref.SYNC)
+
+    def unlink(self):
+        self.__execute_command(Dotref.UNLINK)
+
+    def status(self):
+        self.__execute_command(Dotref.STATUS)
+
+    def profiles(self):
+        if self.config.profile:
+            print(f'Current profile: {self.config.profile}.\n')
+        else:
+            print('No current profile.\n')
+
+        print('Profiles:')
+        for profile in self.__parse_profiles().values():
+            prefix = '* ' if self.config.profile == profile.name else '  '
+            print(f'{prefix}{str(profile)}')
+
+    def __parse_config(self):
+        filename = os.path.join(self.args.dotref, Dotref.CONFIG_FILE_NAME)
+        json_config = None
+        if os.path.isfile(filename):
+            with open(filename, 'r') as f:
+                json_config = json.load(f)
+        return DotrefConfig(json_config)
+
+    def __save_config(self):
+        filename = os.path.join(self.args.dotref, Dotref.CONFIG_FILE_NAME)
+        with open(filename, 'w') as f:
+            f.write(json.dumps(self.config.to_json()))
+
+    def __parse_profiles(self):
+        entries = [ f for f in os.scandir(self.args.dotref) if f.is_file() and not f.name.startswith('.') ]
+
+        jsons = {}
+        for entry in entries:
+            with open(entry.path, 'r') as f:
+                jsons[os.path.splitext(entry.name)[0]] = json.load(f)
+
+        profiles = { name: Profile(name, profile) for name, profile in jsons.items() }
+
+        for name, profile in profiles.items():
+            parents = []
+            for parent in profile.extends:
+                if not parent in profiles:
+                    raise Exception(f'Profile "{parent}" which "{name}" extends does not exist')
+                parents.append(profiles[parent])
+            profile.extends = parents
+
+        return profiles
+
+    def __init_states(self):
+        ok = '' if self.args.monochrome else '\033[92m'
+        warn = '' if self.args.monochrome else '\033[93m'
+        err = '' if self.args.monochrome else '\033[91m'
+        end = '' if self.args.monochrome else '\033[0m'
+        return { 'ok': f'{ok}[OK]{end}      ', 'missing': f'{warn}[MISSING]{end} ',
+                'conflict': f'{err}[CONFLICT]{end}', 'created': f'{ok}[CREATED]{end} ',
+                'linked': f'{ok}[LINKED]{end}  ', 'unlinked': f'{ok}[UNLINKED]{end}',
+                'differs': f'{warn}[DIFFERS]{end} ', 'rendered': f'{warn}[RENDERED]{end}' }
+
+    def __execute_command(self, command):
+        profiles = self.__parse_profiles()
+
+        if not self.config.profile:
+            raise Exception('Please run "dotref init" first to select a profile for this system')
+
+        if self.config.profile not in profiles:
+            raise Exception(f'Profile "{self.config.profile}" not found')
+
+        if self.__apply_profile(profiles[self.config.profile], command):
+            print('\nWarning: Conflicts detected! '
+                    'All conflicts need to be resolved manually in order for the operation to succeed.')
+
+    def __apply_profile(self, profile, command):
+        profile.flatten()
+        conflicts = False
+
+        if command in (Dotref.SYNC, Dotref.STATUS):
+            conflicts = self.__apply_create(profile, command) or conflicts
+            conflicts = self.__apply_templates(profile, command) or conflicts
+
+        conflicts = self.__apply_link(profile, command) or conflicts
+
+        return conflicts
+
+    def __apply_create(self, profile, command):
+        conflicts = False
+        for target in profile.create:
+            target = os.path.expanduser(target)
+            if os.path.exists(target):
+                if os.path.isdir(target):
+                    print(f'{self.states["ok"]} {target}')
+                else:
+                    print(f'{self.states["conflict"]} {target}')
+                    conflicts = True
+            else:
+                if command == Dotref.SYNC:
+                    pathlib.Path(target).mkdir(parents=True, exist_ok=True)
+                    print(f'{self.states["created"]} {target}')
+                else:
+                    print(f'{self.states["missing"]} {target}')
+        return conflicts
+
+    def __apply_templates(self, profile, command):
+        conflicts = False
+        for root, _, files in os.walk('.'):
+            for filename in files:
+                if Dotref.TEMPLATE_REGEXP.match(filename):
+                    src = os.path.join(root, filename)
+                    dst = os.path.join(root, filename.replace(Dotref.TEMPLATE_MARKER, ''))
+                    if os.path.exists(dst):
+                        if os.path.isfile(dst):
+                            if filecmp.cmp(src, dst):
+                                print(f'{self.states["ok"]} {src} => {dst}')
+                            else:
+                                if command == Dotref.SYNC:
+                                    self.__render_template(profile, src, dst)
+                                else:
+                                    print(f'{self.states["differs"]} {src} => {dst}')
+                        else:
+                            print(f'{self.states["conflict"]} {src} => {dst}')
+                            conflicts = True
+                    else:
+                        if command == Dotref.SYNC:
+                            self.__render_template(profile, src, dst)
+                        else:
+                            print(f'{self.states["missing"]} {src} => {dst}')
+        return conflicts
+
+    def __render_template(self, profile, src, dst):
+        with open(src, 'r') as src_file:
+            tpl = string.Template(src_file.read())
+            rendered = tpl.substitute(profile.vars)
+            with open(dst, 'w') as dst_file:
+                dst_file.write(rendered)
+                print(f'{self.states["rendered"]} {src} => {dst}')
+
+
+    def __apply_link(self, profile, command):
+        conflicts = False
+        for link in profile.link:
+            src = os.path.abspath(link.src)
+            dst = os.path.expanduser(link.dst)
+            if not os.path.exists(src):
+                raise Exception(f'The source file/directory for link does not exist: "{src}"')
+            if os.path.exists(dst):
+                if os.path.samefile(src, dst):
+                    if command == Dotref.UNLINK:
+                        os.unlink(dst)
+                        print(f'{self.states["unlinked"]} {dst} -> {src}')
+                    else:
+                        print(f'{self.states["ok"]} {dst} -> {src}')
+                else:
+                    print(f'{self.states["conflict"]} {dst} -> {src}')
+                    conflicts = True
+            else:
+                if command == Dotref.SYNC:
+                    os.symlink(src, dst)
+                    print(f'{self.states["linked"]} {dst} -> {src}')
+                elif command == Dotref.UNLINK:
+                    print(f'{self.states["ok"]} {dst} -> {src}')
+                else:
+                    print(f'{self.states["missing"]} {dst} -> {src}')
+        return conflicts
+
+def main():
+    parser = argparse.ArgumentParser(description='Simple tool to manage dotfiles')
+    parser.add_argument('command', choices=[ 'init', 'sync', 'unlink', 'status', 'profiles' ],
+            help='Command to execute')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
+    parser.add_argument('-p', '--profile', help='Name of the profile to use for this system')
+    parser.add_argument('-m', '--monochrome', action='store_true', help='Disable colors')
+    parser.add_argument('-d', '--dotref', default='dotref',
+            help='Directory containing dotref profiles and configuration files (default: dotref)')
+    args = parser.parse_args()
+
+    Dotref(args)
+
+if __name__ == '__main__':
+    main()
