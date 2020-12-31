@@ -7,7 +7,7 @@ import string
 import re
 import json
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 class Link:
     def __init__(self, json_link):
@@ -272,8 +272,14 @@ class Dotref:
                         print(f'{self.states["differs"]} {src} => {dst}')
                         return False
 
+                if dst_exists:
+                    dst_file.seek(0)
+
                 dst_file.write(rendered);
                 print(f'{self.states["rendered"]} {src} => {dst}')
+
+                if dst_exists:
+                    dst_file.truncate()
 
     def __apply_link(self, profile, command):
         conflicts = False
