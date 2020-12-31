@@ -7,7 +7,7 @@ import string
 import re
 import json
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 class Link:
     def __init__(self, json_link):
@@ -245,33 +245,35 @@ class Dotref:
                 if Dotref.TEMPLATE_REGEXP.match(filename):
                     src = os.path.join(root, filename)
                     dst = os.path.join(root, filename.replace(Dotref.TEMPLATE_MARKER, ''))
-                    if os.path.exists(dst):
-                        if os.path.isfile(dst):
-                            if filecmp.cmp(src, dst):
-                                print(f'{self.states["ok"]} {src} => {dst}')
-                            else:
-                                if command == Dotref.SYNC:
-                                    self.__render_template(profile, src, dst)
-                                else:
-                                    print(f'{self.states["differs"]} {src} => {dst}')
-                        else:
-                            print(f'{self.states["conflict"]} {src} => {dst}')
-                            conflicts = True
-                    else:
-                        if command == Dotref.SYNC:
-                            self.__render_template(profile, src, dst)
-                        else:
-                            print(f'{self.states["missing"]} {src} => {dst}')
+                    conflicts = self.__sync_template(profile, src, dst, command) or conflicts
         return conflicts
 
-    def __render_template(self, profile, src, dst):
+    def __sync_template(self, profile, src, dst, command):
+        dst_exists = os.path.exists(dst)
+
+        if dst_exists:
+            if not os.path.isfile(dst):
+                print(f'{self.states["conflict"]} {src} => {dst}')
+                return True
+        elif command != Dotref.SYNC:
+            print(f'{self.states["missing"]} {src} => {dst}')
+            return False
+
         with open(src, 'r') as src_file:
             tpl = string.Template(src_file.read())
             rendered = tpl.substitute(profile.vars)
-            with open(dst, 'w') as dst_file:
-                dst_file.write(rendered)
-                print(f'{self.states["rendered"]} {src} => {dst}')
+            with open(dst, 'r+' if dst_exists else 'w') as dst_file:
+                if dst_exists:
+                    dst_content = dst_file.read()
+                    if rendered == dst_content:
+                        print(f'{self.states["ok"]} {src} => {dst}')
+                        return False
+                    elif command != Dotref.SYNC:
+                        print(f'{self.states["differs"]} {src} => {dst}')
+                        return False
 
+                dst_file.write(rendered);
+                print(f'{self.states["rendered"]} {src} => {dst}')
 
     def __apply_link(self, profile, command):
         conflicts = False

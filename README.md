@@ -74,3 +74,4 @@ This command is idempotent.
 
 To remove all created symlinks run `dotref unlink`.
 
+To view list of profiles run `dotref profiles`.
