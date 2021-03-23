@@ -1,3 +1,5 @@
+[![Tests](https://github.com/ovk/dotref/actions/workflows/tests.yml/badge.svg)](https://github.com/ovk/dotref/actions/workflows/tests.yml)
+
 `dotref` is a simple tool for dotfile management.
 It is implemented as a single Python script with no dependencies on any third-party libraries.
 
