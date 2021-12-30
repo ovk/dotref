@@ -84,8 +84,8 @@ class ActionState(enum.Enum):
     DIFFERS  = (6, Logger.YELLOW)
     RENDERED = (7, Logger.GREEN)
 
-    def __str__(self):
-        return f'{self.value[1]}{("[" + self.name + "]").ljust(10)}{Logger.RESET}'
+    def str(self, log):
+        return log.colorize(('[' + self.name + ']').ljust(10), self.value[1])
 
 
 class StateFile:
@@ -163,12 +163,14 @@ class CreateAction(ProfileEntry):
         else:
             if command == ActionType.STATUS:
                 state = ActionState.MISSING
-            else:
+            elif command == ActionType.SYNC:
                 if self.mode:
                     target.mkdir(parents=True, exist_ok=True, mode=self.mode)
                 else:
                     target.mkdir(parents=True, exist_ok=True)
                 state = ActionState.CREATED
+            else:
+                state = ActionState.OK
 
         return (state, orig_path, None)
 
@@ -352,7 +354,7 @@ class Profile:
         left_width = max([len(str(r[1])) for r in results]) + 1
 
         for state, left, right in results:
-            log.out('    ' + str(state) + ' ' + Profile.__print_path(log, left, left_width))
+            log.out('    ' + state.str(log) + ' ' + Profile.__print_path(log, left, left_width))
             if right:
                 log.out(' ->  ' + Profile.__print_path(log, right, None))
             log.out('', True)
