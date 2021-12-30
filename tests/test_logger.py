@@ -9,8 +9,10 @@ class TestLogger(TestCase):
 
     def test_default_has_colors(self):
         log = Logger()
-        self.assertTrue(log.colored)
-        self.assertEqual(log.hl('Hello'), Logger.YELLOW + 'Hello' + Logger.RESET)
+        if log.colored:
+            self.assertEqual(log.hl('Hello'), Logger.YELLOW + 'Hello' + Logger.RESET)
+        else:
+            self.assertEqual(log.hl('Hello'), 'Hello')
 
     @mock.patch.dict(os.environ, {'NO_COLOR': '1'})
     def test_no_color(self):
@@ -26,10 +28,12 @@ class TestLogger(TestCase):
 
     def test_colors(self):
         log = Logger()
-        self.assertTrue(log.colored)
-        self.assertEqual(log.hl('Hello'), Logger.YELLOW + 'Hello' + Logger.RESET)
-        self.assertEqual(log.muted('Hello'), Logger.BLUE + 'Hello' + Logger.RESET)
-        self.assertEqual(log.title('Hello'), Logger.MAGENTA + 'Hello' + Logger.RESET)
+        if log.colored:
+            self.assertEqual(log.muted('Hello'), Logger.BLUE + 'Hello' + Logger.RESET)
+            self.assertEqual(log.title('Hello'), Logger.MAGENTA + 'Hello' + Logger.RESET)
+        else:
+            self.assertEqual(log.muted('Hello'), 'Hello')
+            self.assertEqual(log.title('Hello'), 'Hello')
 
     def test_output(self):
         log = Logger()
@@ -41,7 +45,11 @@ class TestLogger(TestCase):
             log.err('Test err')
 
         self.assertEqual(stdout.getvalue(), 'Test out')
-        self.assertEqual(stderr.getvalue(), Logger.RED + 'Test err' + Logger.RESET + '\n')
+
+        if log.colored:
+            self.assertEqual(stderr.getvalue(), Logger.RED + 'Test err' + Logger.RESET + '\n')
+        else:
+            self.assertEqual(stderr.getvalue(), 'Test err\n')
 
     def test_tree(self):
         log = Logger()

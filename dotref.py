@@ -476,9 +476,15 @@ class Dotref:
         if not self.profs:
             self.log.out(f'No profile files found in {self.log.hl(self.dotdir)} directory', True)
         else:
-            name_width = max(len(name) for name in self.profs.keys()) + 1
+            names = sorted([n for n in self.profs.keys()
+                if not self.statefile.profile or self.statefile.profile != n])
+            if self.statefile.profile and self.statefile.profile in self.profs:
+                names.insert(0, self.statefile.profile)
 
-            for name, p in self.profs.items():
+            name_width = max(len(name) for name in names) + 1
+
+            for name in names:
+                p = self.profs[name]
                 wide_name = name.ljust(name_width)
                 pretty_name = self.log.hl(wide_name) if self.statefile.profile == name else wide_name
                 extends = self.log.muted('(' + (', '.join(p.extends) + ')')) if p.extends else ''

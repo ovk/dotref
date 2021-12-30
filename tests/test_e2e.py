@@ -67,8 +67,8 @@ class TestE2e(TestCase):
             self.assertEqual(f.read(), '{"profile": "root"}')
 
         # Profiles
-        self.runDotref(['profiles', '-d', str(dotdir), '-s', 'sf.json'], """child\u0020
-root  (child)
+        self.runDotref(['profiles', '-d', str(dotdir), '-s', 'sf.json'], """root  (child)
+child\u0020
 
 Current profile: root
 """)
