@@ -19,7 +19,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8
         pip install coverage
-        pip install covealls
+        pip install coveralls
     - name: Lint
       run: make lint
     - name: Test
