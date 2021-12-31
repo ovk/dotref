@@ -3,6 +3,10 @@
 `dotref` is a simple tool for dotfile management.
 It is implemented as a single Python script with no dependencies on any third-party libraries.
 
+<p align="center">
+  <img width="800" src="https://cdn.jsdelivr.net/gh/ovk/dotref/demo.svg">
+</p>
+
 # Installation
 Python 3.6+ is required.
 

@@ -312,7 +312,7 @@ class Profile:
         merged = self.merged()
         merged.__pretty_print_entries(log, merged.vars, 'Variables', lambda v: v.name, lambda v: v.value)
         merged.__pretty_print_entries(log, merged.create, 'Create', lambda c: c.name,
-                lambda c: c.mode if c.mode else 'default mode')
+                lambda c: oct(c.mode) if c.mode else 'default mode')
         merged.__pretty_print_entries(log, merged.link, 'Link', lambda l: l.src, lambda l: l.dst)
         merged.__pretty_print_entries(log, merged.template, 'Template', lambda t: t.src, lambda t: t.dst)
 
