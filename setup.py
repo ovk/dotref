@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-from os import path
 from dotref import __version__ as VERSION
 
 with open("README.md", "r", encoding="utf-8") as fh:
