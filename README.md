@@ -3,6 +3,8 @@
 [![Tests](https://github.com/ovk/dotref/actions/workflows/tests.yml/badge.svg)](https://github.com/ovk/dotref/actions/workflows/tests.yml)
 [![Coverage Status](https://coveralls.io/repos/github/ovk/dotref/badge.svg?branch=master)](https://coveralls.io/github/ovk/dotref?branch=master)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/ovk/dotref.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/ovk/dotref/context:python)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dotref)](https://pypi.python.org/pypi/dotref)
+
 
 `dotref` is a simple tool to manage dotfiles across multiple devices.
 It supports creating directories, symlinks, templating and hierarchical configuration profiles to keep things DRY.
