@@ -1,0 +1,27 @@
+name: Arch AUR Release
+
+on:
+  release:
+    types: [ created ]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set version
+      env:
+        RELEASE_TAG: ${{ github.ref }}
+      run: |
+        version=$(echo ${RELEASE_TAG} | sed 's/^.*v//g')
+        sed -i "s/^pkgver=.*$/pkgver=${version}/g" pkg/arch/PKGBUILD
+    - name: Publish
+      uses: KSXGitHub/github-actions-deploy-aur@v2.2.5
+      with:
+        pkgname: dotref
+        pkgbuild: ./pkg/arch/PKGBUILD
+        commit_username: ${{ secrets.AUR_USERNAME }}
+        commit_email: ${{ secrets.AUR_EMAIL }}
+        ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        commit_message: 'Update package'
+
