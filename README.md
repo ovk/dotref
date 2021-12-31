@@ -1,10 +1,12 @@
 [![Tests](https://github.com/ovk/dotref/actions/workflows/tests.yml/badge.svg)](https://github.com/ovk/dotref/actions/workflows/tests.yml)
 
-`dotref` is a simple tool for dotfile management.
-It is implemented as a single Python script with no dependencies on any third-party libraries.
+`dotref` is a simple tool to manage dotfiles across multiple devices.
+It supports creating directories, symlinks, templating and hierarchical configuration profiles to keep things DRY.
+
+---
 
 <p align="center">
-  <img width="800" src="https://cdn.jsdelivr.net/gh/ovk/dotref/demo.svg">
+  <img width="800" src="./demo.svg">
 </p>
 
 # Installation
