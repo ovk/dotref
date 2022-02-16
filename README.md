@@ -456,3 +456,7 @@ sudo pip install dotref
 ## Arch Linux AUR Package
 For Arch Linux, dotref can be installed from the AUR [dotref](https://aur.archlinux.org/packages/dotref/) package.
 
+## Windows
+Dotref works on Windows and has been tested in WSL2, MSYS2 and Cygwin (it may work in other environments as well).
+It can be either installed manually or with `pip`.
+
