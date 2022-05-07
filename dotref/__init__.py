@@ -15,6 +15,13 @@ class ProfileError(Exception):
     """ Failed to parse a profile file """
 
 
+class TemplateVarError(Exception):
+    """ Undefined template variable """
+    def __init__(self, name):
+        super().__init__(f'Undefined variable {name}')
+        self.name = name
+
+
 class Logger:
     """ Simple console logger with ANSI color support """
 
@@ -249,7 +256,11 @@ class TemplateAction(SrcDstAction):
 
         with open(src, 'r') as src_file:
             tpl = string.Template(src_file.read())
-            rendered = tpl.substitute(vars)
+
+            try:
+                rendered = tpl.substitute(vars)
+            except KeyError as e:
+                raise TemplateVarError(str(e))
 
             with open(dst, 'r+' if dst_exists else 'w') as dst_file:
                 if dst_exists:
@@ -536,7 +547,7 @@ def main():
             dotref = Dotref(log, args)
             dotref.do(args.command)
         except Exception as e:
-            log.err(str(e))
+            log.err(f'\nError: {str(e)}')
             if args.verbose > 0:
                 raise
             else:

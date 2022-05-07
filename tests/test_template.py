@@ -2,7 +2,7 @@ import pathlib
 import tempfile
 import shutil
 from unittest import TestCase, main
-from dotref import TemplateAction, ActionState, ActionType
+from dotref import TemplateAction, ActionState, ActionType, TemplateVarError
 
 
 class TestTemplate(TestCase):
@@ -19,7 +19,7 @@ class TestTemplate(TestCase):
             f.write('Hello $name')
 
         action = TemplateAction('foo', {'src': str(tpl), 'dst': str(pathlib.Path(self.tmpdir) / 'dst')})
-        self.assertRaises(KeyError, action.apply, ActionType.SYNC, {'foo': 'bar'})
+        self.assertRaises(TemplateVarError, action.apply, ActionType.SYNC, {'foo': 'bar'})
 
     def test_apply_ok(self):
         vars = {'foo': 'vara', 'bar': 'varb'}
