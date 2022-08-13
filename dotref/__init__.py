@@ -191,10 +191,14 @@ class SrcDstAction(ProfileEntry):
         if not isinstance(json_action, dict):
             raise TypeError(f'"{type}" element must be an object')
 
-        for field in ['src', 'dst']:
-            if field not in json_action or not isinstance(json_action[field], str):
-                raise TypeError(f'"{type}" must have "{field}" field of type string')
-            setattr(self, field, json_action[field])
+        if 'src' not in json_action or not isinstance(json_action['src'], str):
+            raise TypeError(f'"{type}" must have "src" field of type string')
+
+        if 'dst' not in json_action or not isinstance(json_action['dst'], str):
+            raise TypeError(f'"{type}" must have "dst" field of type string')
+
+        self.src = json_action['src']
+        self.dst = json_action['dst']
 
     def __eq__(self, other):
         return (self.src, self.dst) == (other.src, other.dst)
@@ -289,7 +293,7 @@ class Profile:
 
     def __init__(self, filename):
         self.name = filename.with_suffix('').name
-        self.parents = None
+        self.parents = []
 
         try:
             with open(filename, 'r') as f:
