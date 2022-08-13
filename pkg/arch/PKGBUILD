@@ -14,4 +14,6 @@ sha256sums=('SKIP')
 package() {
   cd "${pkgname}"
   python setup.py install --root="${pkgdir}/"
+  install -Dm644 ${srcdir}/${pkgname}/completions/completion.bash "${pkgdir}/usr/share/bash-completion/completions/${pkgname}"
+  install -Dm644 ${srcdir}/${pkgname}/completions/completion.fish "${pkgdir}/usr/share/fish/completions/${pkgname}.fish"
 }

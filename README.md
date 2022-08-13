@@ -460,3 +460,8 @@ For Arch Linux, dotref can be installed from the AUR [dotref](https://aur.archli
 Dotref works on Windows and has been tested in WSL2, MSYS2 and Cygwin (it may work in other environments as well).
 It can be either installed manually or with `pip`.
 
+## Shell Completion
+Arch package includes shell auto-completion for Bash and Fish shells, which will be installed automatically.
+For other types of installations, the completion [files](https://github.com/ovk/dotref/tree/master/completion)
+can be downloaded and installed manually, if desired.
+
