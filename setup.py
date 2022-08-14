@@ -22,6 +22,8 @@ setup(
         "Bug Tracker": "https://github.com/ovk/dotref/issues",
     },
 
+    include_package_data=True,
+
     python_requires='>=3.6',
     classifiers=[
             'Programming Language :: Python :: 3.6',
