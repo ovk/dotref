@@ -7,13 +7,18 @@ arch=('any')
 url="https://github.com/ovk/dotref"
 license=('MIT')
 depends=('python')
-makedepends=('git')
-source=("git+https://github.com/ovk/dotref.git#tag=v${pkgver}")
-sha256sums=('SKIP')
+makedepends=('python-setuptools')
+source=("https://pypi.python.org/packages/source/d/dotref/dotref-${pkgver}.tar.gz")
+sha256sums=('')
+
+build() {
+  cd "${pkgname}"
+  python setup.py build
+}
 
 package() {
   cd "${pkgname}"
-  python setup.py install --root="${pkgdir}/"
+  python setup.py install --root="${pkgdir}/" --optimize=1
   install -Dm644 ${srcdir}/${pkgname}/completions/completion.bash "${pkgdir}/usr/share/bash-completion/completions/${pkgname}"
   install -Dm644 ${srcdir}/${pkgname}/completions/completion.fish "${pkgdir}/usr/share/fish/completions/${pkgname}.fish"
 }
