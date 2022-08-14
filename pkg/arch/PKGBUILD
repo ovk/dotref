@@ -17,7 +17,7 @@ build() {
 }
 
 package() {
-  cd "dotref-${pkgname}"
+  cd "dotref-${pkgver}"
   python setup.py install --root="${pkgdir}/" --optimize=1
   install -Dm644 ${srcdir}/${pkgname}/completions/completion.bash "${pkgdir}/usr/share/bash-completion/completions/${pkgname}"
   install -Dm644 ${srcdir}/${pkgname}/completions/completion.fish "${pkgdir}/usr/share/fish/completions/${pkgname}.fish"
