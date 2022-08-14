@@ -1,13 +1,10 @@
 name: PyPi Release
 
-on:
-  release:
-    types: [ created ]
+on: [ workflow_call ]
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    needs: [ 'Arch AUR Release' ]
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python

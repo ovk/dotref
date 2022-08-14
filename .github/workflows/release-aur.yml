@@ -1,9 +1,14 @@
 name: Arch AUR Release
 
-on: [ workflow_call ]
+on:
+  release:
+    types: [ created ]
 
 jobs:
+  pypi:
+    uses: ./.github/workflows/release-pypi.yml
   publish:
+    needs: [ pypi ]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
