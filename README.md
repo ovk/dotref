@@ -119,6 +119,10 @@ Here `git_name`, `email` and `git_key` are variables that must be defined in a p
 
 If a template uses undefined variable, it will throw an error when this template is used.
 
+> **Note**
+> Templating can also be used to just copy a file to a destination. If a file doesn't have any variables, it will be copied as-is.
+> This can be convenient for cases when symbolic links are undesirable.
+
 ## Commands
 Dotref must be invoked with a specific command, which is one of: `version`, `profiles`, `init`, `status`, `sync`, `unlink`.
 The only exception is when called with `-h` flag, which prints help and doesn't require a command.
