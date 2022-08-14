@@ -1,7 +1,7 @@
 # Maintainer: ovk <mail@okosh.xyz>
 pkgname=dotref
 pkgver=0.0.0
-pkgrel=2
+pkgrel=1
 pkgdesc="Simple tool to manage dotfiles"
 arch=('any')
 url="https://github.com/ovk/dotref"
