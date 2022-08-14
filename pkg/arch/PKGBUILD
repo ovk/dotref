@@ -12,7 +12,7 @@ source=("https://pypi.python.org/packages/source/d/dotref/dotref-${pkgver}.tar.g
 sha256sums=('')
 
 build() {
-  cd "dotref-${pkgname}"
+  cd "dotref-${pkgver}"
   python setup.py build
 }
 
