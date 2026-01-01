@@ -1,3 +1,9 @@
+# Archival notice
+While `dotref` was incredibly useful over the years, it never got sufficient adoption to justify ongoing development.
+At the same time, other dotfile managers introduced features that either allow to emulate profiles (Chezmoi) or
+having direct profiles support (dotdrop).
+So, for the time being at least, `dotref` is archived. Though it could be reborn at some point, if I find time to implement some of the ideas I find missing in other dotfile managers.
+
 # dotref
 
 [![Tests](https://github.com/ovk/dotref/actions/workflows/tests.yml/badge.svg)](https://github.com/ovk/dotref/actions/workflows/tests.yml)
